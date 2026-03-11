@@ -1,0 +1,15 @@
+C:\Users\Renato\Desktop\Proiecte SGGS\Engleza\Lutan\GraphicalSystemsLaborator - Lutan Elena Ruxandra\Debug\GraphicalSystemsLaborator.exe
+C:\Users\Renato\Desktop\Proiecte SGGS\Engleza\Lutan\GraphicalSystemsLaborator - Lutan Elena Ruxandra\Debug\GraphicalSystemsLaborator.pdb
+C:\Users\Renato\Desktop\UNI\Laboratoare\Sistem grafice\Laborator 2019-2020\Proiecte SGGS\Engleza\Lutan\GraphicalSystemsLaborator - Lutan Elena Ruxandra\Debug\GraphicalSystemsLaborator.exe
+C:\Users\Renato\Desktop\UNI\Laboratoare\Sistem grafice\Laborator 2019-2020\Proiecte SGGS\Engleza\Lutan\GraphicalSystemsLaborator - Lutan Elena Ruxandra\Debug\GraphicalSystemsLaborator.pdb
+C:\Users\Renato\Desktop\ProiectSG\Simulare Apa\Debug\GraphicalSystemsLaborator.exe
+C:\Users\Renato\Desktop\ProiectSG\Simulare Apa\Debug\GraphicalSystemsLaborator.pdb
+C:\Users\Razzvan98\Downloads\wetransfer-d84253\Simulare Apa\Debug\GraphicalSystemsLaborator.exe
+C:\Users\Razzvan98\Downloads\wetransfer-d84253\Simulare Apa\Debug\GraphicalSystemsLaborator.pdb
+C:\Users\Razzvan98\Desktop\Facultate\Simulare Apa\Debug\GraphicalSystemsLaborator.exe
+C:\Users\Razzvan98\Desktop\Facultate\Simulare Apa\Debug\GraphicalSystemsLaborator.pdb
+C:\Users\Florin\Desktop\An 4 Sem 2\Open GL\Simulare Apa\Debug\GraphicalSystemsLaborator.exe
+C:\Users\Florin\Desktop\An 4 Sem 2\Open GL\Simulare Apa\Debug\GraphicalSystemsLaborator.pdb
+C:\Users\ivane\Desktop\Simulare Apa\Debug\GraphicalSystemsLaborator.exe
+C:\Users\ivane\Desktop\Water Simulation 2\Debug\GraphicalSystemsLaborator.exe
+C:\Users\Matei\Desktop\GPS_lab\Water Simulation 2\Debug\GraphicalSystemsLaborator.exe

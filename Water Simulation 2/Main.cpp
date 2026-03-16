@@ -141,6 +141,13 @@ void Init(HWND hWnd)
 	CreateRenderTexture(g_Texture, g_TextureSize, 3, GL_RGB, REFRACTION_ID);
 	CreateRenderTexture(g_Texture, g_TextureSize, 1, GL_DEPTH_COMPONENT, DEPTH_ID);
 	
+	// Load circuit and static object textures
+	CreateTexture(g_Texture[ROAD_ID],           "Textures\\Road.bmp");          // Road/asphalt texture
+	CreateTexture(g_Texture[BUILDING_WALL_ID],  "Textures\\BuildingWall.bmp");  // Building walls
+	CreateTexture(g_Texture[BUILDING_ROOF_ID],  "Textures\\BuildingRoof.bmp");  // Building rooftops
+	CreateTexture(g_Texture[TREE_BARK_ID],      "Textures\\TreeBark.bmp");      // Tree trunks
+	CreateTexture(g_Texture[TREE_LEAVES_ID],    "Textures\\TreeLeaves.bmp");    // Tree foliage
+
 	CreateTexture(g_Texture[NORMAL_ID],	 "Textures\\normalmap.bmp");// Load the normal map water texture
 	CreateTexture(g_Texture[DUDVMAP_ID], "Textures\\dudvmap.bmp");	// Load the dudv map water texture
 	CreateTexture(g_Texture[TERRAIN_ID], "Textures\\Terrain.bmp");	// Load the terrain texture
@@ -327,6 +334,10 @@ void RenderWorld(bool bRenderCaustics)
 
 	// Render the clipped height map that is above the water
 	RenderHeightMap(g_HeightMap);
+
+	// Render the street circuit and static objects (above water, visible in reflections too)
+	RenderCircuit();
+	RenderStaticObjects();
 
 	// Turn our clipping plane off
 	glDisable(GL_CLIP_PLANE0);

@@ -381,6 +381,114 @@ def generate_detail_texture():
     return pixels
 
 
+def generate_road_texture():
+    """Asphalt road with a dashed center line and white edge lines."""
+    pixels = []
+    for y in range(SIZE):
+        for x in range(SIZE):
+            # Base asphalt: dark grey with fine noise
+            n = perlin2d(x / 4.0, y / 4.0, 3, 0.5, seed=200)
+            base = 55 + n * 18
+            r, g, b = clamp(base - 2), clamp(base), clamp(base + 2)
+
+            # White edge lines (10 px wide, at top and bottom of texture)
+            if y < 12 or y > SIZE - 13:
+                r, g, b = 230, 230, 225
+
+            # Dashed center line (yellow, 10 px wide, 40 px on / 40 px off)
+            center_band = abs(x - SIZE // 2) < 6
+            dash_on = (y // 40) % 2 == 0
+            if center_band and dash_on:
+                r, g, b = 240, 215, 30
+
+            pixels.append((r, g, b))
+    return pixels
+
+
+def generate_building_wall():
+    """Concrete/brick building facade with rows of windows."""
+    pixels = []
+    brick_h, brick_w = 24, 36
+    mortar = 3
+    win_cols, win_rows = 4, 6
+    win_w = SIZE // win_cols
+    win_h = SIZE // win_rows
+
+    for y in range(SIZE):
+        for x in range(SIZE):
+            # Brick pattern
+            row = y // brick_h
+            col = (x + (row % 2) * (brick_w // 2)) // brick_w
+            bx = (x + (row % 2) * (brick_w // 2)) % brick_w
+            by = y % brick_h
+            in_mortar = bx < mortar or by < mortar
+
+            if in_mortar:
+                r, g, b = 185, 180, 172
+            else:
+                n = perlin2d(x / 8.0, y / 8.0, 2, 0.5, seed=300 + row * 7 + col * 3)
+                r = clamp(175 + n * 20)
+                g = clamp(145 + n * 18)
+                b = clamp(120 + n * 15)
+
+            # Windows: dark blue-grey glass
+            wx = x % win_w
+            wy = y % win_h
+            margin_x = win_w // 5
+            margin_y = win_h // 5
+            if margin_x < wx < win_w - margin_x and margin_y < wy < win_h - margin_y:
+                n2 = perlin2d(x / 12.0, y / 12.0, 2, 0.4, seed=350)
+                r = clamp(60 + n2 * 15)
+                g = clamp(80 + n2 * 15)
+                b = clamp(110 + n2 * 20)
+
+            pixels.append((r, g, b))
+    return pixels
+
+
+def generate_building_roof():
+    """Flat concrete roof with subtle texture and tar-paper lines."""
+    pixels = []
+    for y in range(SIZE):
+        for x in range(SIZE):
+            n = perlin2d(x / 15.0, y / 15.0, 3, 0.5, seed=400)
+            base = 110 + n * 22
+            r, g, b = clamp(base - 5), clamp(base - 3), clamp(base)
+            # Horizontal tar strips every 64 px
+            if (y % 64) < 4:
+                r, g, b = clamp(r - 25), clamp(g - 25), clamp(b - 20)
+            pixels.append((r, g, b))
+    return pixels
+
+
+def generate_tree_bark():
+    """Rough dark-brown bark with vertical streaks."""
+    pixels = []
+    for y in range(SIZE):
+        for x in range(SIZE):
+            n1 = perlin2d(x / 3.0, y / 12.0, 4, 0.6, seed=500)
+            n2 = perlin2d(x / 8.0, y / 5.0, 3, 0.5, seed=510)
+            r = clamp(90 + n1 * 30 + n2 * 12)
+            g = clamp(58 + n1 * 22 + n2 * 8)
+            b = clamp(28 + n1 * 12 + n2 * 5)
+            pixels.append((r, g, b))
+    return pixels
+
+
+def generate_tree_leaves():
+    """Dense green foliage with light/dark variation."""
+    pixels = []
+    for y in range(SIZE):
+        for x in range(SIZE):
+            n1 = perlin2d(x / 12.0, y / 12.0, 4, 0.55, seed=600)
+            n2 = perlin2d(x / 4.0, y / 4.0, 3, 0.6, seed=610)
+            r = clamp(30 + n1 * 20 + n2 * 8)
+            g = clamp(90 + n1 * 40 + n2 * 20)
+            b = clamp(18 + n1 * 10 + n2 * 5)
+            pixels.append((r, g, b))
+    return pixels
+
+
 if __name__ == "__main__":
     os.makedirs(TEXDIR, exist_ok=True)
 
@@ -406,5 +514,20 @@ if __name__ == "__main__":
     for name, seed_off, sun in sides:
         print(f"Generating horizon texture ({name})...")
         write_bmp(os.path.join(TEXDIR, name), generate_horizon_side(seed_off, has_sun=sun), SIZE, SIZE)
+
+    print("Generating road texture (Road.bmp)...")
+    write_bmp(os.path.join(TEXDIR, "Road.bmp"), generate_road_texture(), SIZE, SIZE)
+
+    print("Generating building wall texture (BuildingWall.bmp)...")
+    write_bmp(os.path.join(TEXDIR, "BuildingWall.bmp"), generate_building_wall(), SIZE, SIZE)
+
+    print("Generating building roof texture (BuildingRoof.bmp)...")
+    write_bmp(os.path.join(TEXDIR, "BuildingRoof.bmp"), generate_building_roof(), SIZE, SIZE)
+
+    print("Generating tree bark texture (TreeBark.bmp)...")
+    write_bmp(os.path.join(TEXDIR, "TreeBark.bmp"), generate_tree_bark(), SIZE, SIZE)
+
+    print("Generating tree leaves texture (TreeLeaves.bmp)...")
+    write_bmp(os.path.join(TEXDIR, "TreeLeaves.bmp"), generate_tree_leaves(), SIZE, SIZE)
 
     print("Done! All textures generated.")

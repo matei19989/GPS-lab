@@ -97,10 +97,12 @@
     <ClCompile Include="Init.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="Circuit.cpp" />
     <ClCompile Include="Water.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Circuit.h" />
     <ClInclude Include="CShader.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Terrain.h" />

@@ -151,6 +151,9 @@ extern CShader g_Shader;
 // Include our water functions
 #include "Water.h"
 
+// Include our street circuit and static objects
+#include "Circuit.h"
+
 // This renders all of the world or just the top of it
 void RenderWorld(bool bRenderCaustics);
 

@@ -15,12 +15,19 @@ HINSTANCE g_hInstance;							// This holds the global hInstance for UnregisterCl
 /*
 CONTROLS:
 
- The camera is moved by the mouse and the arrow keys (also w, a, s, d).  
- The mouse buttons turn detail texturing on/off as well as switch to wireframe.  The fog in the water can be changed by the + and minus keys.  We also added these keys:
- F1 - Makes the water appear farther away by shrinking the water texture
- F2 - Makes the water appear closer by enlarging the water texture
- F3 - Makes the water move faster
- F4 - Makes the water slower
+ Mouse        - Look around (pitch / yaw)
+ W/S / Up/Dn - Move forward / backward
+ A/D / Lf/Rt - Strafe left / right
+ Q            - Move straight UP (Y axis)
+ E            - Move straight DOWN (Y axis)
+ Z            - Roll camera counter-clockwise
+ X            - Roll camera clockwise
+
+ Left click   - Toggle detail texture
+ Right click  - Toggle wireframe
+ +/-          - Adjust underwater fog depth
+ F1/F2        - Water UV scale (zoom in/out)
+ F3/F4        - Water flow speed
 
 */
 
@@ -118,11 +125,78 @@ void Init(HWND hWnd)
 	glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
 
 	// Here we read in the height map from the .raw file
-	LoadRawFile("Terrain.raw", MAP_SIZE * MAP_SIZE, g_HeightMap);	
+	LoadRawFile("Terrain.raw", MAP_SIZE * MAP_SIZE, g_HeightMap);
+
+	// ---- Terrain post-processing ----
+	// Raise every low point to solid grass so the map edges and big
+	// depressions are no longer covered by water.
+	const BYTE kGrassLevel = 38;   // comfortably above g_WaterHeight (30)
+	for (int idx = 0; idx < MAP_SIZE * MAP_SIZE; idx++)
+		if (g_HeightMap[idx] < kGrassLevel)
+			g_HeightMap[idx] = kGrassLevel;
+
+	// Carve 4 small circular ponds at the map corners (outside the circuit).
+	// These are the only water areas that will remain.
+	struct { int cx, cz, r; } ponds[4] = {
+		{ 240, 240, 30 },
+		{ 780, 240, 26 },
+		{ 780, 780, 32 },
+		{ 240, 780, 28 }
+	};
+	for (int p = 0; p < 4; p++)
+	{
+		int r = ponds[p].r;
+		for (int dz = -r; dz <= r; dz++)
+		for (int dx = -r; dx <= r; dx++)
+		{
+			if (dx*dx + dz*dz > r*r) continue;
+			int px = ponds[p].cx + dx;
+			int pz = ponds[p].cz + dz;
+			if (px < 1 || px >= MAP_SIZE-1 || pz < 1 || pz >= MAP_SIZE-1) continue;
+			g_HeightMap[px + pz * MAP_SIZE] = 5;  // well below water level
+		}
+	}
 
 	glEnable(GL_DEPTH_TEST);							// Enables depth testing
 	glEnable(GL_TEXTURE_2D);							// Enable texture mapping
 	glEnable(GL_CULL_FACE);								// Turn on back-face culling
+
+	// ---- Lighting setup ----
+	// Sun light (GL_LIGHT0) — directional, matching the light used by the water shader
+	GLfloat ambientLight[]  = { 0.3f, 0.3f, 0.3f, 1.0f };
+	GLfloat diffuseLight[]  = { 0.9f, 0.85f, 0.7f, 1.0f };
+	GLfloat specularLight[] = { 1.0f, 1.0f, 0.9f, 1.0f };
+	GLfloat sunPos[]        = { 100.0f, 150.0f, 100.0f, 1.0f }; // point light (matches water shader)
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambientLight);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffuseLight);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
+	glLightfv(GL_LIGHT0, GL_POSITION, sunPos);
+	glEnable(GL_LIGHT0);
+
+	// Streetlight point lights (GL_LIGHT1 .. GL_LIGHT6) — yellow-tinted
+	GLfloat slAmbient[]  = { 0.05f, 0.05f, 0.0f,  1.0f };
+	GLfloat slDiffuse[]  = { 0.9f,  0.85f, 0.3f,  1.0f };
+	GLfloat slSpecular[] = { 0.8f,  0.8f,  0.2f,  1.0f };
+	for (int li = 0; li < 6; li++)
+	{
+		GLenum lightID = GL_LIGHT1 + li;
+		glLightfv(lightID, GL_AMBIENT,  slAmbient);
+		glLightfv(lightID, GL_DIFFUSE,  slDiffuse);
+		glLightfv(lightID, GL_SPECULAR, slSpecular);
+		// Attenuation so streetlights only reach nearby objects
+		glLightf(lightID, GL_CONSTANT_ATTENUATION,  1.0f);
+		glLightf(lightID, GL_LINEAR_ATTENUATION,    0.005f);
+		glLightf(lightID, GL_QUADRATIC_ATTENUATION, 0.0002f);
+		glEnable(lightID);
+	}
+
+	// Allow material colors to track glColor (for buildings/trees/streetlights)
+	glEnable(GL_COLOR_MATERIAL);
+	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+
+	// Enable lighting globally; terrain has no normals so we disable/enable per-object
+	glEnable(GL_LIGHTING);
 
 	// The extra initialization for this tutorial is to (1) position the camera
 	// above the water, (2) create 3 textures for our reflection, refraction and
@@ -307,6 +381,9 @@ void RenderWorld(bool bRenderCaustics)
 	// depend on the water depth of course.  Adjust for realism in your world.
 	// The water height is used for clipping the top part of the terrain.
 	
+	// Terrain/caustics do not have normals — disable lighting for these passes
+	glDisable(GL_LIGHTING);
+
 	// Only render the caustics if we want to (i.e. not rendering reflection texture)
 	if(bRenderCaustics)
 		RenderCaustics(g_WaterHeight, kCausticScale);
@@ -336,14 +413,50 @@ void RenderWorld(bool bRenderCaustics)
 	RenderHeightMap(g_HeightMap);
 
 	// Render the street circuit and static objects (above water, visible in reflections too)
+	// Disable lighting for terrain-level objects that lack proper normals; re-enable for lit ones.
+	glDisable(GL_LIGHTING);
 	RenderCircuit();
+	glEnable(GL_LIGHTING);
 	RenderStaticObjects();
+	RenderStreetlights();
+
+	// Update streetlight positions for GL_LIGHT1..GL_LIGHT6 every frame
+	for (int li = 0; li < NUM_STREETLIGHTS; li++)
+	{
+		GLfloat lp[4] = {
+			g_StreetlightLamps[li].x,
+			g_StreetlightLamps[li].y,
+			g_StreetlightLamps[li].z,
+			1.0f
+		};
+		glLightfv(GL_LIGHT1 + li, GL_POSITION, lp);
+	}
+
+	// ----- Shadow pass -----
+	// Ground plane approximation: use water height + small offset as the shadow receiver.
+	// (Terrain is mostly at or above this level in the circuit area.)
+	float shadowGroundY = g_WaterHeight + 2.5f;
+
+	// Shadow from the sun (GL_LIGHT0 at 100,150,100)
+	RenderSceneShadows(100.0f, 150.0f, 100.0f, shadowGroundY);
+
+	// Shadow from each streetlight
+	for (int li = 0; li < NUM_STREETLIGHTS; li++)
+	{
+		RenderSceneShadows(
+			g_StreetlightLamps[li].x,
+			g_StreetlightLamps[li].y,
+			g_StreetlightLamps[li].z,
+			shadowGroundY);
+	}
 
 	// Turn our clipping plane off
 	glDisable(GL_CLIP_PLANE0);
-	
+
 	// Render our background sky box.
+	glDisable(GL_LIGHTING);
 	CreateSkyBox(500, 500, 500, 1000, 1020, 1000);
+	glEnable(GL_LIGHTING);
 }
 
 ///////////////////////////////// RENDER SCENE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
@@ -408,8 +521,9 @@ void RenderScene()
 	// culling to FRONT when we are under the water, the reset it
 	// to BACK after drawing the water.  This might increase speed.
 
-	// Turn the shaders on for the water
+	// Turn the shaders on for the water (water shader does its own lighting)
 	g_Shader.TurnOn();
+	glDisable(GL_LIGHTING);
 
 	// Disable culling, draw the water at the g_WaterHeight, then turn
 	// culling back on so we can see the water from above or below.
@@ -417,6 +531,7 @@ void RenderScene()
 	RenderWater(g_WaterHeight);
 	glEnable(GL_CULL_FACE);
 
+	glEnable(GL_LIGHTING);
 	// Turn the shaders off again until we redraw the water
 	g_Shader.TurnOff();
 

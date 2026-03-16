@@ -1,13 +1,8 @@
 ﻿cl : command line  warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  Circuit.cpp
   Main.cpp
+  Circuit.cpp
   Generating Code...
-  Skipping... (no relevant changes detected)
-  Water.cpp
-  Terrain.cpp
-  Init.cpp
-  CShader.cpp
-  Camera.cpp
+  LINK : Debug\GraphicalSystemsLaborator.exe not found or not built by the last incremental link; performing full link
 Camera.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
   GraphicalSystemsLaborator.vcxproj -> C:\Users\Matei\Desktop\GPS_lab\Water Simulation 2\Debug\GraphicalSystemsLaborator.exe
   'pwsh.exe' is not recognized as an internal or external command,

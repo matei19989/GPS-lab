@@ -39,6 +39,12 @@ public:
 	// This will move the camera forward or backward depending on the speed
 	void MoveCamera(float speed);
 
+	// This moves the camera straight up or down along the world Y axis
+	void MoveVertical(float speed);
+
+	// This rolls the camera around its view axis
+	void RollCamera(float angle);
+
 	// This checks for keyboard movement
 	void CheckForMovement();
 

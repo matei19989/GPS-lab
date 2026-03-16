@@ -264,6 +264,38 @@ void CCamera::StrafeCamera(float speed)
 }
 
 
+///////////////////////////////// MOVE VERTICAL \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+//  This moves the camera straight up or down along the world Y axis
+
+void CCamera::MoveVertical(float speed)
+{
+	m_vPosition.y += speed;
+	m_vView.y     += speed;
+}
+
+
+///////////////////////////////// ROLL CAMERA \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+//  This rolls the camera by rotating the up vector around the view direction
+
+void CCamera::RollCamera(float angle)
+{
+	// Get the forward (view) direction and normalize it
+	CVector3 vDir = Normalize(m_vView - m_vPosition);
+
+	// Rotate the up vector around the forward axis using Rodrigues' formula
+	float cosA = cosf(angle);
+	float sinA = sinf(angle);
+
+	CVector3 u = m_vUpVector;
+	CVector3 newUp;
+	newUp.x = cosA*u.x + sinA*(vDir.y*u.z - vDir.z*u.y);
+	newUp.y = cosA*u.y + sinA*(vDir.z*u.x - vDir.x*u.z);
+	newUp.z = cosA*u.z + sinA*(vDir.x*u.y - vDir.y*u.x);
+
+	m_vUpVector = Normalize(newUp);
+}
+
+
 ///////////////////////////////// MOVE CAMERA \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 //  This will move the camera forward or backward depending on the speed
 
@@ -312,11 +344,31 @@ void CCamera::CheckForMovement()
 	}
 
 	// Check if we hit the Right arrow or the 'd' key
-	if(GetKeyState(VK_RIGHT) & 0x80 || GetKeyState('D') & 0x80) {			
+	if(GetKeyState(VK_RIGHT) & 0x80 || GetKeyState('D') & 0x80) {
 
 		// Strafe the camera right
 		StrafeCamera(speed);
-	}	
+	}
+
+	// Check if we hit the 'Q' key — move camera straight up along world Y
+	if(GetKeyState('Q') & 0x80) {
+		MoveVertical(speed);
+	}
+
+	// Check if we hit the 'E' key — move camera straight down along world Y
+	if(GetKeyState('E') & 0x80) {
+		MoveVertical(-speed);
+	}
+
+	// Check if we hit the 'Z' key — roll camera left (counter-clockwise)
+	if(GetKeyState('Z') & 0x80) {
+		RollCamera(speed * 0.01f);
+	}
+
+	// Check if we hit the 'X' key — roll camera right (clockwise)
+	if(GetKeyState('X') & 0x80) {
+		RollCamera(-speed * 0.01f);
+	}
 }
 
 
